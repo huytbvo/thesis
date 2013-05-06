@@ -1,0 +1,18 @@
+\section{Basic Hardware Construction in Chisel}
+The Chisel constructs presented in the previous section are adequate
+for most hardware circuits. We have in fact built an entire floating
+point library using only those constructs. Occasionally, users might
+want to leverage syntax available in a target backend from within
+Chisel. Suppose for example that a user is having Chisel target a
+backend that has support for highly optimized FFT circuits. One way to
+leverage this feature is to introduce a new type of {\tt Node} into
+Chisel that maps directly to that syntax in the backend. This section
+will show how ListLookup, Vec, and When Nodes are implemented to
+target Verilog's case statements, arrays, and if statements
+respectively.
+
+\subsection{ListLookup}
+
+\subsection{Vec}
+
+\subsection{When}
