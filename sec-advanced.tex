@@ -1,0 +1,18 @@
+\section{Advanced Hardware Construction in Chisel}
+Another way to support hardware facilities in Chisel, as opposed to
+building new nodes, is to write a Scala program that aggregates the
+features of Chisel from Chapter~\ref{sec:chisel} into a directed graph
+of nodes that implement the same hardware functionality. This approach
+has the advantage of decoupling the hardware facility from the
+backend, making the hardware facility more accessible as it can now be
+mapped to more backends. The only requirement on the backend is that
+they can support the basic Chisel nodes from
+Chapter~\ref{sec:chisel}. Furthermore, the designer is no longer
+required to write the code generation function for every single
+backend, saving a great deal on designer effort. The rest of this
+chapter will show how to implement ListLookup and Vec using only the
+basic Chisel nodes presented in Chapter~\ref{sec:chisel}
+
+\subsection{ListLookup}
+
+\subsection{Vec}
