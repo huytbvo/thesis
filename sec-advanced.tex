@@ -46,3 +46,39 @@ for Bits $b_k$.
 \caption{Vec implemented using Scala code and basic Chisel nodes}
 \label{fig:vecscala}
 \end{figure}
+
+Figure~\ref{fig:vecscala} shows the resulting graph from building a
+Vec using only basic Chisel nodes. Note that Vec is now a Scala array
+of {\tt Bits} and is not a {\tt Node}. The syntax for constructing a
+Vec is unchanged; users instantiate the Vec with the desired
+size. Since the Vec is now a Scala array, users populate the Vec using
+Scala array syntax, e.g.
+\begin{align*}
+  \text{ \tt{v(1) = Bits(width=32)} }
+\end{align*}
+where {\tt v} is the name of the Vec. The syntax for reading and
+writing to the Vec is also unchanged. The difference is that reads
+and writes will now construct the graph in Figure~\ref{fig:vecscala}
+instead of instantiating special read and write nodes.
+
+\textbf{Reads} A Vec can be indexed with either Scala integer or a
+Chisel {\tt Node}. If a Scala integer is used, no {\tt Nodes} are
+created and the element at that index is returned. If a Chisel 
+{\tt Node} is used, then a Mux chain is built to mux out the correct
+element of the Vec. The select signal to the mux is {\tt addr === idx}
+where {\tt addr} is the address and {\tt idx} ranges from zero to
+length of the Vec minus 1. When {\tt addr} matches an {\tt idx}, the
+element at {\tt v(idx)} is outputted.
+
+\textbf{Writes} Like reads, a Vec can be written to using either a
+Scala integer or a Chisel {\tt Node} for indexing. If a Scala integer
+is used, then the corresponding element is accessed and written to and
+no nodes are constructed. If a Chisel {\tt Node} is used, then a mux
+is placed in front of each element in the Vec. The select signal to
+the mux is {\tt waddr ==== idx} where {\tt waddr} is the input write
+address and {\tt idx} ranges from zero to the length of the Vec minus
+1. If the write address matches the {\tt idx}, then the element at
+{\tt v(idx)} is written to with the write data, otherwise {\tt v(idx)}
+is written to with the default data. If the {\tt Vec} contains 
+{\tt Bits} then the user supplies the default data. If the {tt Vec}
+contains {\tt Reg} nodes then no default signal is needed.
