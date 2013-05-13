@@ -155,12 +155,40 @@ or {\tt Component} belongs. These functions allow the user to
 succinctly describe a pipeline and unclutters the datapath code since
 these functions can be maintained independent of the datapath.
 
-{\bf Pipeline Generation}.
+{\bf Pipeline Generation}. The pipeline specification functions record
+information that is read during elaboration time to add pipeline
+registers to the directed graph of {\tt Nodes} that the Chisel datapath
+code constructs.
 
-{\bf Hazard Detection}.
+{\bf Hazard Detection}. Inserting pipeline registers into the datapath
+graph introduces pipelining hazards that are not present in the
+unpipelined datapath. Here we discuss how to handle data hazards which
+result from a transaction reading a state element (a {\tt Reg} node or
+{\tt Mem} node) before an earlier transaction writes to that state
+element. 
 
-{\bf Hazard Resolution - Interlocks}.
+We first search through the datapath graph to find all state
+elements. For every state element, we determine whether or not a
+hazard exists on it. If there is a hazard on a state element, we add
+the hazard condition into a list. For {\tt Reg} or {\tt Mem} node, a
+hazard condition exists if the node belongs in a stage that precedes the
+stage of its write enable or write data signal. The actual Boolean
+hazard condition is {\tt wen \&\& ren} for a {\tt Reg} node and
+{\tt wen \&\& ren \&\& waddr == raddr} for a {\tt Mem} node.
 
-{\bf Hazard Resolution - Speculation}.
+{\bf Hazard Resolution - Interlocks}. The easiest way to resolve
+hazards is through interlocks. This hazard resolution method requires
+no additional input from the user. At the stage of every state element
+with a hazard condition, we trigger a stall at that stage and all
+preceding stages while inserting a bubble in the following stage until
+the hazard condition is no longer asserted.
 
-{\bf Hazard Resolution - Bypassing}.
+{\bf Hazard Resolution - Speculation}. Some hazards can be resolved
+through speculation. In a processor pipeline, for example, we can use
+speculation to remove interlocks on the PC register. Users identify
+speculation points.
+
+{\bf Hazard Resolution - Bypassing}. Bypass networks can be built to
+forward results from later stages to earlier stages that need the
+result instead of forcing the earlier stages to stall until results
+are committed. Users identify bypassing points.
