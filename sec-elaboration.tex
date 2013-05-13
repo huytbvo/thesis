@@ -20,7 +20,7 @@ The Chisel compiler mantains a list of functions that it invokes
 during elaboration time to refine the input user graph of 
 {\tt Nodes}. These functions must adhere to the interface described in
 Figure~\ref{fig:transforms}. The bodies of the functions in
-Figure~\ref{fig:transforms1} varies from transformation to
+Figure~\ref{fig:transform1} varies from transformation to
 transformation but will usually follow two phase format. The first
 phase performs some analysis on the Chisel graph to collect
 information, e.g. find all Reg nodes. The second phase will then use
@@ -57,6 +57,25 @@ construct the circuit once the user has specified all the updates than
 it is to construct the circuit as the user is specifying
 updates. 
 
+\begin{figure}[htb]
+\centering
+  \begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/when.pdf}
+  \caption{When Code}
+  \label{fig:whenscala}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=0.5\textwidth]{figures/whengraph.pdf}
+  \caption{When Graph}
+  \label{fig:whenelab}
+  \end{subfigure}
+\caption{When Statement}
+\label{fig:when}
+\end{figure}
+
 {\bf Runtime}. Instead of constructing hardware whenever a {\tt when}
 statement is executed, we simply record information to be used during
 elaboration. For this purpose, we maintain a mapping of node to list
@@ -70,10 +89,78 @@ mutually exclusive. In the case when multiple updates are enabled,
 Chisel has the semantics that the last update in program order (i.e
 the last update in the list of updates) takes priority.
 
-{\bf Elaboration time}. The elaboration time transformation function
-does not need to perform any analysis since all the elaboration
-information is already logged.
+Figure~\ref{fig:whenscala} shows an example usage of when statements
+to conditionally update a register. When this statement is executed,
+it will add 3 update tuples to {\tt reg}'s list of update tuples. The
+first statement adds the tuple {\tt (condA, updateA)}, the second adds
+{\tt (condB \&\& !condA, updateB)}, and the third adds
+{\tt (!condB \&\& !condA, updateC)}.
 
-\subsection{SRAM Interface}
+{\bf Elaboration Time}. The elaboration time transformation function
+does not need to perform any analysis since we store all the
+information for elaboration during runtime in the form of a mapping
+from node to list of update tuples. For each entry in this mapping, we
+construct a chain of {\tt Mux} nodes from the list of upate tuples and
+connect the output of that chain into the input of the node in the
+mapping. If the node in the mapping is a {\tt Reg} node then nothing
+is done for the case when no updates are enabled. Otherwise, the node
+in the mappng is a {\tt Bits} node and we have an additional {\tt Mux}
+node to mux out a default signal provided by the user. If no default
+signal is provided, Chisel reports an error to the user.
+
+\subsection{SRAM Backend}
+Users targetting the Verilog backend will want to map Mems to SRAMs
+with backend specific SRAM interfaces. One way to target these SRAM
+interfaces is to encode the interface into the Chisel user code. This
+has the disadvantageous effect of muddling the code with SRAM specific
+information and makes it an unnecesarily tedious to compile the Chisel
+for a different SRAM backend.
+
+A better way to target backend specific SRAM interfaces is to write an
+elaboration time fuction that transforms the Chisel graph to target
+specific SRAM interfaces. Let's say we want to target an SRAM that has
+an {\tt init} pin which needs to be wired to the top level module. We
+first perform either a breadth first search or depth first search to
+find all {\tt Mem} nodes in the graph. For every {\tt Mem} node, we
+create a new {\tt Bits} node to stand in for the {\tt init} pin. We
+add this node to the {\tt Mem} node's input. Finally, we walk up the
+{\tt Component} hierarchy starting at the {\tt Component} that
+contains the {\tt Mem} node and ending at the top level
+{\tt Component}. For every {\tt Component} along this path, we create
+a new port to connect up the {\tt init} pin.
+
+Targetting SRAM interfaces in this way allows us to decouple of the
+SRAM backend from the user code. If we want to switch to a different
+SRAM target we only need to switch to a different elaboration time
+function and do not need to modify the user code.
 
 \subsection{Automatic Pipeline Synthesis}
+Pipelining is a commonly used microarchitectural technique for
+improving the performance of a datapath. Hardware designers usually
+determine upfront the desired pipeline depth and then bake the
+corresponding pipelining logic into their datapath code. This approach
+clutters an otherwise easily readible datapath with extraneous logic
+unrelated to original functionality of the datapath, making it
+difficult to modify the datapath or even change the pipeline depth. A
+better approach that overcomes these issues is to move the pipelining
+logic into elaboration time functions.
+
+{\bf Pipeline Specification}. In a hand coded pipeline, the pipeline
+depth and the placement of pipeline registers are baked into the
+Chisel datapath code. Our approach provides the functions 
+{\tt setNumStages} for specifying the pipeline depth, 
+{\tt setPipelineComponent} for specifying the datapath to pipeline,
+and {\tt addToPipeline } for specifying in what pipeline stage a {\tt Node}
+or {\tt Component} belongs. These functions allow the user to
+succinctly describe a pipeline and unclutters the datapath code since
+these functions can be maintained independent of the datapath.
+
+{\bf Pipeline Generation}.
+
+{\bf Hazard Detection}.
+
+{\bf Hazard Resolution - Interlocks}.
+
+{\bf Hazard Resolution - Speculation}.
+
+{\bf Hazard Resolution - Bypassing}.
