@@ -1,10 +1,10 @@
 \section{Chisel}
 \label{sec:chisel}
-Chisel is a domain specific language embedded in the Scala
+Chisel is a domain-specific language embedded in the Scala
 programming language so it is really just a library of Scala functions
 and data structures. Someone writing Chisel code is essentially writing a Scala
 program that uses the provided functions and data structures to
-construct hardware. This rest of this section introduces the core
+construct hardware. This chapter introduces the core
 components of the Chisel hardware construction language; readers
 interested in a more a detailed specification of Chisel should consult
 the Chisel manual. 
@@ -48,9 +48,9 @@ exhaustive list of supported operations. Op nodes are constructed
 whenever a user invokes the corresponding type node member
 function for the operation. For example, suppose we have two {\tt
 Bits} nodes, {\tt a} and {\tt b}, and want to connect them to the
-input of an AND gate. The Chisel code that will do this is {\tt a \&
-b} which is actually syntatic sugar for {\tt a.\&(b)}. The {\tt \&}
-function that Bits defines will instatiate an {\tt Op} node to
+inputs of an AND gate. The Chisel code that will do this is {\tt a \&
+b} which is actually syntactic sugar for {\tt a.\&(b)}. The {\tt \&}
+function that Bits defines will instantiate an {\tt Op} node to
 represent the {\tt \&} and put the two {\tt Bits} nodes, {\tt a} and
 {\tt b}, into the {\tt Op} node's input.
 
@@ -70,12 +70,12 @@ Bits} connected to the {\tt |} {\tt Op}.
 \end{figure}
 
 {\bf Literals} The {\tt Lit} node works in conjunction with type {\tt Nodes} to
-represent literals. Figue~\ref{fig:lits} shows example Chisel code for
-instatiating literals. True and false literals are represented as Bools
+represent literals. Figure~\ref{fig:lits} shows example Chisel code for
+instantiating literals. True and false literals are represented as Bools
 connected to {\tt Lit} nodes 1 and 0 respectively. Arbitrary bit
 strings can be represented with {\tt Bits} Nodes and numbers can be represented with
 {\tt Fix} and {\tt UFix} Nodes, all of which are connected to {\tt Lit
-Nodes} with the appropritate value.
+Nodes} with the appropriate value.
 
 \begin{figure}[b]
 \centering
@@ -114,20 +114,20 @@ Nodes} with the appropritate value.
 represents a positive-edge-triggered flip-flop. {\tt Reg} nodes, unlike the
 previous nodes, are manually instantiated by the user. The manual
 details the different ways that a Reg can be constructed. Briefly,
-Regs can be constructed either with or without its update signal and
-its reset signal. {\tt Reg}'s constructed without an update signal can
+Regs can be constructed either with or without an update signal.
+{\tt Reg}'s constructed without an update signal can
 be conditionally updated.
 
 {\bf Memories} {\tt Mem Nodes} are used to represent random access
-memories. These memories can be accesssed with either {\tt Bits} or
+memories. These memories can be accessed with either {\tt Bits} or
 {\tt UFix} nodes. Writes to these memories are positive-edge-triggered while
 reads can be either combination or positive-edge-triggered.
 
 \subsection{Component}
-In addition to {\tt Nodes}, Chisel also provides {\tt Components} which users can
-use to organize their directed graph of {\tt Nodes} into subgraphs, adding a
-hierarchical structure to their hardware. Figure~\ref{fig:muxcomp} shows
-example an Chisel implementation of a 4-input mux built from 3 2-input muxes.
+In addition to {\tt Nodes}, Chisel also provides {\tt Components} to allow users
+to organize their directed graph of {\tt Nodes} into subgraphs, adding a
+hierarchical structure to their hardware. Figure~\ref{fig:muxcomp} shows an
+example of a Chisel implementation of a 4-input mux built from three 2-input muxes.
 
 \begin{figure}
 \centering
@@ -159,7 +159,7 @@ collected into Bundles, which are functionally similar to to C
 structs, for better organization. 
 
 {\bf Wiring} Once a Component's interface and circuit
-implemementation are defined, users will need to connect Components
+implementation are defined, users will need to connect Components
 together. Chisel provides two different ways for connecting
 Components together. {\tt :=} is used for connections goings from
 right to left while {\tt <>} is used for connections that go in either
@@ -177,7 +177,7 @@ nodes. Chisel currently generates code for two backends: Verilog and C++.
 {\bf Elaboration} The elaboration phase performs backend specific
 transformation on the graph in order to generate valid code for that
 backend. For example, it is desirable to preserve Component hierarchy
-when targetting the Verilog backend, so the elaboration phase will do a
+when targeting the Verilog backend, so the elaboration phase will do a
 graph walk to match nodes into components. For the C++ backend, the
 elaboration phase will transform the graph into a directed acyclic
 graph and perform a topological sort.

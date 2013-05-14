@@ -1,5 +1,5 @@
 \section{Elaboration Time Hardware Construction}
-The methods for constructing hardware in the previous sections are all
+The methods for constructing hardware in the previous chapters are all
 similar in that the user directly interfaces with them. The user
 directly constructs the directed subgraph of {\tt Nodes} that
 implements the desired circuit and connects that subgraph to the main
@@ -16,7 +16,7 @@ interface for writing elaboration time hardware construction routines
 and three examples of how to use that interface.
 
 \subsection{Elaboration Time Hardware Construction Interface}
-The Chisel compiler mantains a list of functions that it invokes
+The Chisel compiler maintains a list of functions that it invokes
 during elaboration time to refine the input user graph of 
 {\tt Nodes}. These functions must adhere to the interface described in
 Figure~\ref{fig:transforms}. The bodies of the functions in
@@ -50,7 +50,7 @@ circuit for every Reg node and connect the circuit into the Reg node.
 \subsection{When}
 Chisel provides a {\tt when - elsewhen - otherwise} statement for
 performing conditional updates on {\tt Bits} and {\tt Reg}
-nodes. This statement appears behaviorial but actually constructs a
+nodes. This statement appears behavioral but actually constructs a
 hardware circuit to perform the update. The construction of this
 circuit is delayed until elaboration time since it is easier to
 construct the circuit once the user has specified all the updates than
@@ -82,7 +82,7 @@ elaboration. For this purpose, we maintain a mapping of node to list
 of update tuples with the format {\tt (cond, bits)} where {\tt cond}
 is the condition of the when statement and {\tt bits} is the update
 data. These update tuples are constructed for every update statement
-within the body of a {\tt when} statement and appeneded to the list
+within the body of a {\tt when} statement and appended to the list
 mapped to the node on the left hand side of that update
 statement. Note that the updates in this list do not have to be
 mutually exclusive. In the case when multiple updates are enabled,
@@ -100,24 +100,24 @@ first statement adds the tuple {\tt (condA, updateA)}, the second adds
 does not need to perform any analysis since we store all the
 information for elaboration during runtime in the form of a mapping
 from node to list of update tuples. For each entry in this mapping, we
-construct a chain of {\tt Mux} nodes from the list of upate tuples and
+construct a chain of {\tt Mux} nodes from the list of update tuples and
 connect the output of that chain into the input of the node in the
 mapping. If the node in the mapping is a {\tt Reg} node then nothing
 is done for the case when no updates are enabled. Otherwise, the node
-in the mappng is a {\tt Bits} node and we have an additional {\tt Mux}
+in the mapping is a {\tt Bits} node and we have an additional {\tt Mux}
 node to mux out a default signal provided by the user. If no default
 signal is provided, Chisel reports an error to the user.
 
 \subsection{SRAM Backend}
-Users targetting the Verilog backend will want to map Mems to SRAMs
+Users targeting the Verilog backend will want to map Mems to SRAMs
 with backend specific SRAM interfaces. One way to target these SRAM
 interfaces is to encode the interface into the Chisel user code. This
 has the disadvantageous effect of muddling the code with SRAM specific
-information and makes it an unnecesarily tedious to compile the Chisel
+information and makes it an unnecessarily tedious to compile the Chisel
 for a different SRAM backend.
 
 A better way to target backend specific SRAM interfaces is to write an
-elaboration time fuction that transforms the Chisel graph to target
+elaboration time function that transforms the Chisel graph to target
 specific SRAM interfaces. Let's say we want to target an SRAM that has
 an {\tt init} pin which needs to be wired to the top level module. We
 first perform either a breadth first search or depth first search to
@@ -129,7 +129,7 @@ contains the {\tt Mem} node and ending at the top level
 {\tt Component}. For every {\tt Component} along this path, we create
 a new port to connect up the {\tt init} pin.
 
-Targetting SRAM interfaces in this way allows us to decouple of the
+Targeting SRAM interfaces in this way allows us to decouple of the
 SRAM backend from the user code. If we want to switch to a different
 SRAM target we only need to switch to a different elaboration time
 function and do not need to modify the user code.
@@ -139,7 +139,7 @@ Pipelining is a commonly used microarchitectural technique for
 improving the performance of a datapath. Hardware designers usually
 determine upfront the desired pipeline depth and then bake the
 corresponding pipelining logic into their datapath code. This approach
-clutters an otherwise easily readible datapath with extraneous logic
+clutters an otherwise easily readable datapath with extraneous logic
 unrelated to original functionality of the datapath, making it
 difficult to modify the datapath or even change the pipeline depth. A
 better approach that overcomes these issues is to move the pipelining
