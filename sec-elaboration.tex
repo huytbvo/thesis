@@ -136,24 +136,96 @@ SRAM target we only need to switch to a different elaboration time
 function and do not need to modify the user code.
 
 \subsection{Automatic Pipeline Synthesis}
+\begin{figure}[htb]
+\centering
+  \begin{subfigure}[t]{0.8\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipeline.pdf}
+  \caption{Datapath Graph.}
+  \label{fig:datapathgrah}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.8\textwidth}
+  \vspace{20pt}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinedag.pdf}
+  \caption{Datapath turned into a DAG.}
+  \label{fig:datapathdag}
+  \end{subfigure}
+\caption{CPU Datapath}
+\label{fig:datapath}
+\end{figure}
+
+\begin{figure}[htb]
+\centering
+  \begin{subfigure}[t]{0.8\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinehazard.pdf}
+  \caption{Hazard Detection.}
+  \label{fig:haz}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.8\textwidth}
+  \vspace{20pt}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelineinterlock.pdf}
+  \caption{Interlocks.}
+  \label{fig:int}
+  \end{subfigure}
+\caption{Resolving hazards through interlocks}
+\label{fig:hazint}
+\end{figure}
+
+\begin{figure}[htb]
+\centering
+  \begin{subfigure}[t]{0.8\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinespec.pdf}
+  \caption{Speculation.}
+  \label{fig:spec}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.8\textwidth}
+  \vspace{20pt}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinebypass.pdf}
+  \caption{Bypassing.}
+  \label{fig:bypass}
+  \end{subfigure}
+\caption{Resolving hazards through speculation and bypassing}
+\label{fig:specbyp}
+\end{figure}
+
 Pipelining is a commonly used microarchitectural technique for
 improving the performance of a datapath. Hardware designers usually
 determine upfront the desired pipeline depth and then bake the
 corresponding pipelining logic into their datapath code. This approach
-clutters an otherwise easily readable datapath with extraneous logic
+clutters an otherwise easy to read datapath with extraneous logic
 unrelated to original functionality of the datapath, making it
 difficult to modify the datapath or even change the pipeline depth. A
 better approach that overcomes these issues is to move the pipelining
 logic into elaboration time functions.
 
-{\bf Pipeline Specification}. In a hand coded pipeline, the pipeline
-depth and the placement of pipeline registers are baked into the
-Chisel datapath code. Our approach provides the functions 
+{\bf Datapath and Pipeline Specification}. In our approach, the Chisel
+datapath code that implements a transaction is maintained separate of
+the datapath's pipeline specification. The datapath code is viewed as
+a set of architectural state elements and next-state logic that reads
+the architectural state and computes the updates. We use {\tt Reg}
+nodes and {\tt TransactionalMem}s to represent architectural
+state. For {\tt Reg} nodes, we view the enable signal and the
+update signal as the {\tt wen} and {\tt wdata} of the Reg. The {\tt Reg}
+node itself is treated as the {\tt rdata}. A {\tt TransactionalMem} is
+a Chisel {\tt Component} that wraps a Chisel {\tt Mem} node. 
+{\tt TransactionalMem}s are instantiated with the desired number of
+{\it virtual} write ports and {\it physical} write ports. Each
+virtual write port has an explicit {\tt wen}, {\tt wdata}, and {\tt waddr}
+port. The {\tt TransactionalMem} generates the logic to multiplex the
+virtual write ports over the physical write ports if there are more
+virtual write ports than physical write ports.
+
+Our pipeline synthesis tools provides the functions
 {\tt setNumStages} for specifying the pipeline depth, 
 {\tt setPipelineComponent} for specifying the datapath to pipeline,
-and {\tt addToPipeline } for specifying in what pipeline stage a {\tt Node}
+and {\tt setPipelineStage } for specifying in what pipeline stage a {\tt Node}
 or {\tt Component} belongs. These functions allow the user to
-succinctly describe a pipeline and unclutters the datapath code since
+succinctly describe a pipeline and unclutter the datapath code since
 these functions can be maintained independent of the datapath.
 
 {\bf Pipeline Generation}. The pipeline specification functions record
@@ -164,25 +236,58 @@ code constructs.
 {\bf Hazard Detection}. Inserting pipeline registers into the datapath
 graph introduces pipelining hazards that are not present in the
 unpipelined datapath. Here we discuss how to handle data hazards which
-result from a transaction reading a state element (a {\tt Reg} node or
-{\tt Mem} node) before an earlier transaction writes to that state
+result from a transaction reading a state element (a {\tt Reg} node or a
+{\tt TransactionalMem}) before an earlier transaction writes to that state
 element. 
 
 We first search through the datapath graph to find all state
 elements. For every state element, we determine whether or not a
 hazard exists on it. If there is a hazard on a state element, we add
-the hazard condition into a list. For {\tt Reg} or {\tt Mem} node, a
-hazard condition exists if the node belongs in a stage that precedes the
+the hazard condition into a list. For {\tt Reg} or {\tt TransactionalMem}, a
+hazard condition exists if the state element belongs in a stage that precedes the
 stage of its write enable or write data signal. The actual Boolean
 hazard condition is {\tt wen \&\& ren} for a {\tt Reg} node and
-{\tt wen \&\& ren \&\& waddr == raddr} for a {\tt Mem} node.
+{\tt wen \&\& ren \&\& waddr == raddr} for a {\tt TransactionalMem}.
+
+Figure~\ref{fig:haz} shows the hazard conditions that our tool
+identifies on the {\tt TransactionalMem}. when analyzing the generated pipeline in
+Figure~\ref{fig:datapathdag}. We first search the pipeline for all
+state elements. In this example, the {\tt Reg} node and the 
+{\tt TransactionalMem} are the only state elements. We then examine
+the read and write ports of these state elements to determine whether
+or not there are any hazards. The {\tt Reg} has its write port in the
+second stage but its read port is in the first stage. So we generate a
+hazard signal in the first stage. The {\tt Transactionalmem} has its
+write port in the fifth stage but its read port is in the second
+stage. We trace backwards from the {\tt wen} in the fifth stage to the
+second stage to find all the other {\tt wen} signals. For each 
+({\tt wen}$_i$, {\tt waddr}$_i$) pair, we generate a hazard condition
+{\tt wen$_i$ === ren$_i$ \&\& waddr$_i$ === raddr}.
 
 {\bf Hazard Resolution - Interlocks}. The easiest way to resolve
 hazards is through interlocks. This hazard resolution method requires
-no additional input from the user. At the stage of every state element
-with a hazard condition, we trigger a stall at that stage and all
-preceding stages while inserting a bubble in the following stage until
-the hazard condition is no longer asserted.
+no additional input from the user. Every identified hazard is placed
+into the stage of the read port that generates the hazard. In
+Figure~\ref{fig:haz}, the hazards would be placed into the second
+stage because the corresponding read port is in the second stage. We
+then go through every stage and perform an {\tt OR} reduction on all
+the hazards in that stage as well as all the hazard conditions in the
+following stages to produce the stall condition for that stage. The
+second part of interlocking a pipeline is to push bubbles. We go
+through every stage and generate a {\tt pushBubble} signal if there is
+a hazard condition in that stage and no following stages have a
+hazard.
+
+Figure~\ref{fig:int} shows the interlock logic that our tool
+generates to handle the hazards from Figure~\ref{fig:haz}. Since
+the {\tt TransactionalMem}'s read port is in the second stage, all the
+{\tt hazard$_i$}s go into the second stage. When examining the second
+stage, the tool would {\tt OR} reduce all the {\tt hazard}$_i$s to
+generate a stall condition to stall the first stage. The same hazard
+condition is then used to generate the {\tt pushBubble} signal. There
+are no other sources of hazards further down the pipeline so the
+hazard condition in the second stage is sufficient for pushing a
+bubble into the second stage.
 
 {\bf Hazard Resolution - Speculation}. Some hazards can be resolved
 through speculation. In a processor pipeline, for example, we can use
