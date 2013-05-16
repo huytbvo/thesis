@@ -141,56 +141,25 @@ function and do not need to modify the user code.
   \begin{subfigure}[t]{0.8\textwidth}
   \centering
   \includegraphics[width=\textwidth]{figures/pipeline.pdf}
-  \caption{Datapath Graph.}
+  \caption{{\bf Datapath Graph}. CPU datapath represented as a
+    directed dataflow graph in Chisel.}
   \label{fig:datapathgrah}
   \end{subfigure}
   \begin{subfigure}[t]{0.8\textwidth}
   \vspace{20pt}
   \centering
   \includegraphics[width=\textwidth]{figures/pipelinedag.pdf}
-  \caption{Datapath turned into a DAG.}
+  \caption{{\bf Datapath DAG}. 5-stage CPU datapath turned into a
+    directed acyclic graph by breaking {\tt Reg} nodes and {\tt
+      TransactionalMem} into read and write ports. The dashed lines
+    represent pipeline boundaries.}
   \label{fig:datapathdag}
   \end{subfigure}
-\caption{CPU Datapath}
+\caption[5-stage CPU Datapath]{{\bf 5-stage CPU Datapath}. ALU = arithmetic logic unit. D\$
+  = data cache. I\$ =  instruction cache. TMem =
+  TransactionalMem. {\tt x}.R = read port of node {\tt x}. {\tt x}.W =
+  write port of node {\tt x}}
 \label{fig:datapath}
-\end{figure}
-
-\begin{figure}[htb]
-\centering
-  \begin{subfigure}[t]{0.8\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/pipelinehazard.pdf}
-  \caption{Hazard Detection.}
-  \label{fig:haz}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.8\textwidth}
-  \vspace{20pt}
-  \centering
-  \includegraphics[width=\textwidth]{figures/pipelineinterlock.pdf}
-  \caption{Interlocks.}
-  \label{fig:int}
-  \end{subfigure}
-\caption{Resolving hazards through interlocks}
-\label{fig:hazint}
-\end{figure}
-
-\begin{figure}[htb]
-\centering
-  \begin{subfigure}[t]{0.8\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{figures/pipelinespec.pdf}
-  \caption{Speculation.}
-  \label{fig:spec}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.8\textwidth}
-  \vspace{20pt}
-  \centering
-  \includegraphics[width=\textwidth]{figures/pipelinebypass.pdf}
-  \caption{Bypassing.}
-  \label{fig:bypass}
-  \end{subfigure}
-\caption{Resolving hazards through speculation and bypassing}
-\label{fig:specbyp}
 \end{figure}
 
 Pipelining is a commonly used microarchitectural technique for
@@ -200,8 +169,10 @@ corresponding pipelining logic into their datapath code. This approach
 clutters an otherwise easy to read datapath with extraneous logic
 unrelated to original functionality of the datapath, making it
 difficult to modify the datapath or even change the pipeline depth. A
-better approach that overcomes these issues is to move the pipelining
-logic into elaboration time functions.
+better approach that overcomes these issues is to separate the
+pipelining logic from the datapath specification~\cite{hoe:syn}. The
+designer provides only the datapath and pipeline specification. Then during
+elaboration, Chisel generates the pipelining logic.
 
 {\bf Datapath and Pipeline Specification}. In our approach, the Chisel
 datapath code that implements a transaction is maintained separate of
@@ -221,17 +192,63 @@ virtual write ports over the physical write ports if there are more
 virtual write ports than physical write ports.
 
 Our pipeline synthesis tools provides the functions
-{\tt setNumStages} for specifying the pipeline depth, 
 {\tt setPipelineComponent} for specifying the datapath to pipeline,
 and {\tt setPipelineStage } for specifying in what pipeline stage a {\tt Node}
 or {\tt Component} belongs. These functions allow the user to
 succinctly describe a pipeline and unclutter the datapath code since
-these functions can be maintained independent of the datapath.
+the pipeline specification can be maintained independent of the datapath.
 
-{\bf Pipeline Generation}. The pipeline specification functions record
-information that is read during elaboration time to add pipeline
-registers to the directed graph of {\tt Nodes} that the Chisel datapath
-code constructs.
+{\bf Pipeline Generation}. During elaboration our pipeline synthesis
+tool reads the datapath and pipeline specification to determine
+register placement. We first mark nodes with the stage number that the
+user has indicated in their pipeline specification. For each node with
+a stage number we propagate the node's stage numbers to node's
+producers and consumers in a breadth first search like manner. We only
+propagate a stage number if (1) the node currently does not have a stage
+number conflict and (2) all of its children (producer and consumer nodes)
+are ready to receive a stage number. When receiving a stage number, a
+node will take a stage number that is either equal to the max stage number of
+its producers (if the node is receiving a propagation from its producer
+side)or equal to the min stage number of its consumers (if the node is
+receiving propagation from its consumer side).
+
+Nodes can be marked with multiple stage numbers since it is possible to
+reach nodes from different pipeline stages. Our tool adds pipeline
+registers to the node's inputs (between the node and its producer) or
+to the node's outputs (between the node and its consumer) to resolve
+stage number conflicts. Resolving a node's stage number conflict
+before propagation allows our tool to more deterministically assign
+stage numbers.
+
+A node is ready for propagation from the producer side if all of its
+producers have a stage number. Likewise, a node is ready for
+propagation from the consumer side if all of its consumers have a
+stage number.
+
+Once all nodes are marked with a stage number, we make one final pass
+through the Chisel graph to insert pipeline registers between adjacent
+nodes with different stage numbers.
+
+\begin{figure}[htb]
+\centering
+  \begin{subfigure}[t]{0.8\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinehazard.pdf}
+  \caption{{\bf Hazard Detection}. All the hazards that
+    the {\tt TransactionalMem} generates in a 5-stage pipeline.}
+  \label{fig:haz}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.8\textwidth}
+  \vspace{20pt}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelineinterlock.pdf}
+  \caption{{\bf Interlocks}. The hazard conditions stall the
+  first and second stage and push bubbles into the third stage.}
+  \label{fig:int}
+  \end{subfigure}
+\caption{Resolving hazards through interlocks}
+\label{fig:hazint}
+\end{figure}
 
 {\bf Hazard Detection}. Inserting pipeline registers into the datapath
 graph introduces pipelining hazards that are not present in the
@@ -257,7 +274,7 @@ state elements. In this example, the {\tt Reg} node and the
 the read and write ports of these state elements to determine whether
 or not there are any hazards. The {\tt Reg} has its write port in the
 second stage but its read port is in the first stage. So we generate a
-hazard signal in the first stage. The {\tt Transactionalmem} has its
+hazard signal in the first stage. The {\tt TransactionalMem} has its
 write port in the fifth stage but its read port is in the second
 stage. We trace backwards from the {\tt wen} in the fifth stage to the
 second stage to find all the other {\tt wen} signals. For each 
@@ -283,18 +300,96 @@ generates to handle the hazards from Figure~\ref{fig:haz}. Since
 the {\tt TransactionalMem}'s read port is in the second stage, all the
 {\tt hazard$_i$}s go into the second stage. When examining the second
 stage, the tool would {\tt OR} reduce all the {\tt hazard}$_i$s to
-generate a stall condition to stall the first stage. The same hazard
+generate a stall condition in the second stage. This stall condition
+is used to stall the second and first stage. The same hazard
 condition is then used to generate the {\tt pushBubble} signal. There
 are no other sources of hazards further down the pipeline so the
 hazard condition in the second stage is sufficient for pushing a
-bubble into the second stage.
+bubble into the second stage. Although not shown, we also generate
+interlock logic for {\tt Reg} whose read port is in stage one and
+write port is in stage two. We generate a hazard condition in the
+first stage that is used to stall only the first stage. A bubble is
+pushed into stage two if this hazard condition is asserted the second
+stage's hazard condition is not asserted.
 
-{\bf Hazard Resolution - Speculation}. Some hazards can be resolved
-through speculation. In a processor pipeline, for example, we can use
-speculation to remove interlocks on the PC register. Users identify
-speculation points.
+\begin{figure}[htb]
+\centering
+  \begin{subfigure}[t]{0.8\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinespec.pdf}
+  \caption{{\bf Speculation}. Using speculation to resolve hazards on
+    the {\tt Reg} node whose read port is in the first stage and write port
+  is in the second stage.}
+  \label{fig:spec}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.8\textwidth}
+  \vspace{20pt}
+  \centering
+  \includegraphics[width=\textwidth]{figures/pipelinebypass.pdf}
+  \caption{{\bf Bypassing}. Bypassing network generated to forward ALU
+  results from the third stage, fourth stage, and fifth stage to the
+  {\tt TransactionalMem}'s second read port.}
+  \label{fig:bypass}
+  \end{subfigure}
+\caption{Resolving hazards through speculation and bypassing}
+\label{fig:specbyp}
+\end{figure}
 
-{\bf Hazard Resolution - Bypassing}. Bypass networks can be built to
-forward results from later stages to earlier stages that need the
-result instead of forcing the earlier stages to stall until results
-are committed. Users identify bypassing points.
+{\bf Hazard Resolution - Speculation}. Our tool provides the function
+{\tt speculate} that users can use to specify the stage element whose
+write value they want 
+to speculate along with the value they want to use for
+speculation. This hazard resolution option is useful for transactions
+that produce data that takes on one value with a very high likelihood
+since we can have dependent transactions guess that value, allowing us
+to avoid stalls. In a processor pipeline, for example, transactions
+will usually write {\tt PC+4} to the PC register. To take advantage of
+this regularity, we can guess that every transaction will write {\tt
+  PC+4} to the {\tt PC} register. During elaboration, we modify the
+Chisel graph to use the speculation value that the user provides to
+update the node that the user marks for speculation. The speculation
+value is pipelined until the actual data value is produced. We compare
+the speculation value to the actual value. If the values match, we
+continue as normal. Otherwise, we flush every stage starting at the
+speculation stage up to but not including the stage where the
+speculation value is checked.
+
+To see how our speculation tool works, let's examine the pipeline in
+Figure~\ref{fig:spec}. Notice that since every
+transaction writes to the {\tt Reg} node in the second stage while
+another transaction reads the node in the first stage, the interlock
+hazard resolution option would cause our pipeline to stall every other
+cycle. This scenario is a good match for the speculation resolution
+option since transactions tend to write a very predictable value into
+that node. We use the {\tt speculate} function to indicate that we
+are guessing that the {\tt Reg} node will take on {\tt SpecVal}. We
+mux in {\tt SpecVal} into the {\tt Reg} and then pipeline {\tt
+  SpecVal} once (since the {\tt Reg} is read in the first stage and
+written in the second stage). We compare {\tt SpecVal} to the actual
+value to generate a kill signal that is asserted whenever the two
+signals do not match. The kill signal is used to write the correct
+value into the {\tt Reg} and we kill stage one.
+
+{\bf Hazard Resolution - Bypassing}. Transactions that depend on the
+results of previous transactions can make use of bypass networks to
+receive these results instead of interlocking until those results are
+committed. Our tool provides the functions {\tt bypassTo} to annotate
+a read port for bypassing and {\tt avoidBypassFrom} to annotate that a
+write path should not be bypassed. During elaboration, the pipeline
+synthesis tool generates the appropriate bypassing network. For each
+read port, the tool traces backwards from the corresponding write port
+to find all {\tt wen}, {\tt wdata}, and {\tt waddr} signals and filters
+out the write ports from {\tt avoidBypassFrom}. For each ({\tt wen},
+{\tt wdata}, {\tt waddr}) tuple that the tool finds, generate a mux
+at the read port to mux out {\tt wdata} whenever {\tt wen \&\& waddr
+  === raddr} giving priority to ({\tt wen}, {\tt wdata}, {\tt waddr})
+tuples from earlier pipeline stages. We then search for that condition
+in the hazard list and remove it to avoid generating the interlock
+logic for that condition. 
+
+Figure~\ref{fig:bypass} shows an example bypass network. In this
+example, the user annotates the second read port of the {\tt
+  TransactionalMem} with {\tt bypassTo} function and has told the tool
+to not bypass from the data cache with the {\tt avoidBypassFrom}
+function. The tool generates a chain of three muxes since it found three
+write paths out of the ALU in the third, fourth, and fifth stage.

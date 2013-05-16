@@ -1,6 +1,6 @@
 \section{Introduction}
 \label{sec:intro}
-Chisel is designed to be a {\it hardware construction language} so any
+Chisel~\cite{Bachrach:2012} is designed to be a {\it hardware construction language} so any
 design in Chisel will always have a well defined mapping to low level
 hardware blocks. Chisel's core programming features allow users to
 accurately describe hardware circuits and can easily extended for
@@ -12,7 +12,7 @@ We first introduce the core features of the Chisel hardware
 construction language in Chapter~\ref{sec:chisel}. All hardware design
 in Chisel boils down to writing a Scala program that builds up a directed
 graph of {\tt Nodes} which are Scala classes that map to basic circuit
-elements. Chisel provides basic operators for consructing and
+elements. Chisel provides basic operators for constructing and
 connecting nodes into subgraphs. The subgraphs can be organized into
 {\tt Components} which can be connected to other {\tt Components} to
 form larger and more complex graphs. Chisel code can be mapped to many
@@ -23,7 +23,7 @@ Chapter~\ref{sec:basic} presents the lowest level of hardware
 construction in Chisel. We consider this the lowest level since
 Chisel code is written at the granularity of Chisel's most basic
 element, {\tt Nodes}. At this hardware construction level, Chisel user
-code looks identical to the targetted backend code. This can be
+code looks identical to the targeted backend code. This can be
 advantageous if the backend has syntax that the its tools can use to
 synthesize efficient hardware. The downside to this is that syntax in
 one backend might not have a parallel in another backend.
@@ -43,11 +43,25 @@ code from the backends.
 The last level of hardware construction, Chapter~\ref{sec:elab},
 analyzes and transforms Chisel graphs to produce different Chisel
 graphs. This hardware construction level is similar to the hardware
-construction level of Chapter~\ref{sec:advanced} in that users stil
+construction level of Chapter~\ref{sec:advanced} in that users still
 write Scala programs to build hardware. The difference is that these
 functions are invoked during elaboration time to modify a graph
 instead of during runtime to build the graph. This hardware
 construction level is useful for circuit designs that are difficult or
 undesirable to build during runtime.
 
-\subsection{Acknowledgements}
+\subsection{Acknowledgments}
+The Chisel HDL is an ongoing project. Jonathan Bachrach is the
+original author. I joined the project in 2011 where I worked with
+Jonathan and Brian Richards to port an existing FPU library from
+Verilog to Chisel. I continued working with Jonathan to implement
+Chisel's type system. In 2012 I work with Yunsup Lee to port an
+existing vector machine to Chisel. During this time I developed Vec to
+better express the hardware in the vector machine. I eventually moved
+Vec into Chisel's library. Since then Andrew Waterman had added new
+functionality to Vec such as {\tt contains} and {\tt forAll}
+methods. Jonathan is responsible for the original implementation of
+Chisel's {\tt when} statement. Andrew implemented Chisel's elaboration
+time interface. Yunsup, Andrew, and I have written various SRAM
+backends for the chips we built. The automatic pipeline synthesis tool
+is CS294-88 class project that I developed with Wenyu Tang.

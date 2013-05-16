@@ -49,7 +49,7 @@ implemented to target Verilog's case statements and arrays.
     case statements each with $n$ literal assignments.}
   \label{fig:llv}
   \end{subfigure}
-\caption{{\bf ListLookup}}
+\caption{ListLookup as Chisel Node}
 \label{fig:ll}
 \end{figure}
 
@@ -62,8 +62,7 @@ We introduce {\tt ListLookup} and {\tt ListLookupRef} nodes to target
 Verilog's case statement from within Chisel which is useful for
 writing decode tables.
 
-\textbf{ListLookup Node}.The inputs to this node, see
-Figure~\ref{fig:llsyntax}, are an address, a default list of literals,
+\textbf{ListLookup Node}.The inputs to this node are an address, a default list of literals,
 and a list of tuples {\tt (a$_i$, lits$_i$)} where {\tt lits$_i$} is a list
 of a literals. Figure~\ref{fig:llnode} shows how the inputs to the
 {\tt ListLookup} nodes are managed. This node is different from other
@@ -76,13 +75,6 @@ have an assignment for each literal in {\tt lits$_i$}. The address
 input to the ListLookup is used as the lookup address into the case
 statement and the {\tt a$_i$}'s are used to match against the
 address. If no address matches, the default assignment is used.
-
-\begin{figure}
-\centering
-\theverbbox
-\caption{ListLookup Syntax}
-\label{fig:llsyntax}
-\end{figure}
 
 \textbf{ListLookupRef Node}. Creating a new {\tt ListLookup} will not return
 the {\tt ListLookup} to the user, rather, a list of 
@@ -111,7 +103,7 @@ of a {\tt ListLookup} node.
   array accesses in Verilog.}
   \label{fig:vecv}
   \end{subfigure}
-\caption{{\bf Vec}.}
+\caption{Vec as Chisel Node}
 \label{fig:vec}
 \end{figure}
 

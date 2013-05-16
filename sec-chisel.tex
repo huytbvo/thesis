@@ -7,7 +7,7 @@ program that uses the provided functions and data structures to
 construct hardware. This chapter introduces the core
 components of the Chisel hardware construction language; readers
 interested in a more a detailed specification of Chisel should consult
-the Chisel manual. 
+the Chisel manual~\cite{chisel:man} which can be found on the Chisel website. 
 
 \subsection{Node}
 Hardware circuits are represented in Chisel as directed graphs of
@@ -144,7 +144,7 @@ example of a Chisel implementation of a 4-input mux built from three 2-input mux
   \caption{4-Input Mux}
   \label{fig:mux4}
   \end{subfigure}
-  \caption{Hierarchically building a 4-Input Mux out of 3 2-Input Muxes}
+  \caption{Hierarchical 4-Input Mux}
   \label{fig:muxcomp}
 \end{figure}
 
@@ -226,5 +226,3 @@ string
 \end{align*}
 assuming that the two nodes in the {\tt Op}'s input list have names
 {\tt b} and {\tt c}.
-
-\cite{Bachrach:2012}
