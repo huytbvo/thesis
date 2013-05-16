@@ -130,7 +130,7 @@ contains the {\tt Mem} node and ending at the top level
 {\tt Component}. For every {\tt Component} along this path, we create
 a new port to connect up the {\tt init} pin.
 
-Targeting SRAM interfaces in this way allows us to decouple of the
+Targeting SRAM interfaces in this way allows us to decouple the
 SRAM backend from the user code. If we want to switch to a different
 SRAM target we only need to switch to a different elaboration time
 function and do not need to modify the user code.

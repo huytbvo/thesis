@@ -155,13 +155,13 @@ represented with a type {\tt Node} where the direction field is set to
 either {\tt INPUT} or {\tt OUTPUT}. The example in
 Figure~\ref{fig:mux} shows Component interfaces built out of {\tt
 Bits} nodes. Input and output nodes can be
-collected into Bundles, which are functionally similar to to C
+collected into Bundles, which are functionally similar to C
 structs, for better organization. 
 
 {\bf Wiring} Once a Component's interface and circuit
 implementation are defined, users will need to connect Components
 together. Chisel provides two different ways for connecting
-Components together. {\tt :=} is used for connections goings from
+Components together. {\tt :=} is used for connections going from
 right to left while {\tt <>} is used for connections that go in either
 direction. Both connection operators can be used to connect either individual
 ports or entire Bundles. If used for the latter, the connection
