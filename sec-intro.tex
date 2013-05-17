@@ -3,7 +3,7 @@
 Chisel~\cite{Bachrach:2012} is designed to be a {\it hardware construction language} so any
 design in Chisel will always have a well defined mapping to low level
 hardware blocks. Chisel's core programming features allow users to
-accurately describe hardware circuits and can easily extended for
+accurately describe hardware circuits and can be easily extended for
 higher level hardware designs. This paper categorizes Chisel hardware
 construction into three levels and discusses the merits and drawbacks
 of each level.
@@ -11,7 +11,7 @@ of each level.
 We first introduce the core features of the Chisel hardware
 construction language in Chapter~\ref{sec:chisel}. All hardware design
 in Chisel boils down to writing a Scala program that builds up a directed
-graph of {\tt Nodes} which are Scala classes that map to basic circuit
+graph of {\tt Nodes} which are Scala objects that map to basic circuit
 elements. Chisel provides basic operators for constructing and
 connecting nodes into subgraphs. The subgraphs can be organized into
 {\tt Components} which can be connected to other {\tt Components} to
@@ -24,7 +24,7 @@ construction in Chisel. We consider this the lowest level since
 Chisel code is written at the granularity of Chisel's most basic
 element, {\tt Nodes}. At this hardware construction level, Chisel user
 code looks identical to the targeted backend code. This can be
-advantageous if the backend has syntax that the its tools can use to
+advantageous if the backend has syntax that the tools can use to
 synthesize efficient hardware. The downside to this is that syntax in
 one backend might not have a parallel in another backend.
 
@@ -50,6 +50,27 @@ instead of during runtime to build the graph. This hardware
 construction level is useful for circuit designs that are difficult or
 undesirable to build during runtime.
 
+\subsection{Related Works}
+The most widely used hardware description languages (HDL), Verilog and VHDL,
+are actually ill-suited for designing efficient, high-performance
+hardware. These languages lack the powerful abstraction facilities
+that are readily available in modern programming languages. Without
+these facilities, hardware designers using these languages are
+relegated to writing undescriptive and non-reusable hardware modules
+which dramatically impedes the most important aspect of building
+efficient hardware: design space exploration.
+
+One way to circumvent this issue is to design hardware from within a
+specific domain. Esterel~\cite{esterel} is synchronous programming
+language that uses event-based statement to describe reactive
+systems. Bluespec~\cite{bluespec} uses guarded atomic actions to
+describe state change. Spiral~\cite{hoe:spiral} generates hardware
+for linear signal transformations from an input problem
+description. Although these languages allow designers to write more
+expressive hardware, they only work well when used for task that
+matches their model and will fall short when used for general purpose
+hardware construction.
+
 \subsection{Acknowledgments}
 The Chisel HDL is an ongoing project. Jonathan Bachrach is the
 original author. I joined the project in 2011 where I worked with
@@ -58,7 +79,8 @@ Verilog to Chisel. I continued working with Jonathan to implement
 Chisel's type system. In 2012 I work with Yunsup Lee to port an
 existing vector machine to Chisel. During this time I developed Vec to
 better express the hardware in the vector machine. I eventually moved
-Vec into Chisel's library. Since then Andrew Waterman had added new
+Vec into Chisel's library. Since then Jonathan has added support for
+bidirectional wires to Vec and Andrew Waterman has added new
 functionality to Vec such as {\tt contains} and {\tt forAll}
 methods. Jonathan is responsible for the original implementation of
 Chisel's {\tt when} statement. Andrew implemented Chisel's elaboration

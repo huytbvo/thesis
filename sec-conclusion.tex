@@ -1,0 +1,20 @@
+\section{Conclusion and Future Work}
+We have classified Chisel hardware construction into three different
+levels. The first level of Chisel hardware construction has users
+working directly with {\tt Nodes} to construct hardware. At the second level
+of hardware construction, Chisel {\tt Nodes} are abstracted away into
+Scala functions. We present examples of two useful hardware facilities
+{\tt ListLookup} and {\tt Vec} implemented at both levels to highlight
+the advantages and disadvantages of each level. Finally, the third
+level of hardware construction has users writing elaboration time
+functions that the Chisel compiler invokes to build hardware. We
+present Chisel {\tt when} statements, SRAM backends, and an automatic
+pipeline synthesis tool as examples of hardware construction at this
+level.
+
+In future work, we would examine other ways of constructing hardware
+in Chisel. One possible way to further raise the hardware construction
+abstraction level would be to implement a process language DSL in Chisel
+for writing state machines. We would also explore other possible
+use cases of Chisel's elaboration interface such as generating
+multithreaded datapaths and FAME~\cite{fame} transformations.

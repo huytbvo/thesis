@@ -164,7 +164,7 @@ function and do not need to modify the user code.
 
 Pipelining is a commonly used microarchitectural technique for
 improving the performance of a datapath. Hardware designers usually
-determine upfront the desired pipeline depth and then bake the
+determine up front the desired pipeline depth and then bake the
 corresponding pipelining logic into their datapath code. This approach
 clutters an otherwise easy to read datapath with extraneous logic
 unrelated to original functionality of the datapath, making it
@@ -209,7 +209,7 @@ number conflict and (2) all of its children (producer and consumer nodes)
 are ready to receive a stage number. When receiving a stage number, a
 node will take a stage number that is either equal to the max stage number of
 its producers (if the node is receiving a propagation from its producer
-side)or equal to the min stage number of its consumers (if the node is
+side) or equal to the min stage number of its consumers (if the node is
 receiving propagation from its consumer side).
 
 Nodes can be marked with multiple stage numbers since it is possible to
